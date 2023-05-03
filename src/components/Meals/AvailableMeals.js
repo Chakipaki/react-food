@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 
 import styles from "./AvailableMeals.module.css";
 import Card from "../UI/Card";
@@ -32,12 +32,50 @@ const DUMMY_MEALS = [
 ];
 
 const AvailableMeals = props => {
-    const mealList = DUMMY_MEALS.map(meal => (
+    const [meal, setMeals] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [httpError, setHttpError] = useState(null);
+
+    useEffect(() => {
+        const fetchMeals = async () => {
+            setIsLoading(true);
+            const response = await fetch('https://react-http-1-a181a-default-rtdb.firebaseio.com/meals.json');
+            if (!response.ok) {
+                throw new Error('Something wrong');
+            }
+            const data = await response.json();
+            setMeals(data);
+            setIsLoading(false);
+        }
+
+        fetchMeals().catch(e => {
+            setIsLoading(false);
+            setHttpError(e.message)
+        });
+    }, []);
+
+    if (isLoading) {
+        return (
+            <section className={styles.mealsLoading}>
+                <p>Loading...</p>
+            </section>
+        )
+    }
+
+    if (httpError) {
+        return (
+            <section className={styles.mealsError}>
+                <p>{httpError}</p>
+            </section>
+        )
+    }
+
+    const mealList = meal.map(meal => (
         <MealItem
             id={meal.id}
             key={meal.id}
             name={meal.name}
-            price={meal.price}
+            price={+meal.price}
             description={meal.description}
         />
     ));
